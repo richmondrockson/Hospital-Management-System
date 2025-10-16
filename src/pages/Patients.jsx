@@ -16,6 +16,9 @@ const Patients = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterGender, setFilterGender] = useState("All");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [patientToDelete, setPatientToDelete] = useState(null);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editPatient, setEditPatient] = useState(null);
   const [formData, setFormData] = useState({
@@ -66,10 +69,11 @@ const Patients = () => {
   };
 
   // Delete patient
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this patient?")) {
-      setPatients((prev) => prev.filter((p) => p.id !== id));
-    }
+  const handleDeletePatient = () => {
+    if (!patientToDelete) return;
+    setPatients((prev) => prev.filter((p) => p.id !== patientToDelete));
+    setIsDeleteModalOpen(false);
+    setPatientToDelete(null);
   };
 
   // Filter + search logic
@@ -89,21 +93,24 @@ const Patients = () => {
         <Button onClick={() => openModal()}>Add Patient</Button>
       </div>
 
-      {/* Search + Filter */}
-      <div className="flex gap-4 mb-6">
-        <Input
-          placeholder="Search patients..."
+      {/* Search + Filter Section */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
+        {/* Search Field */}
+        <input
+          type="text"
+          placeholder="Search by name or condition..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-1/2"
+          className="border border-gray-300 rounded-md px-3 py-2 w-full sm:w-1/2 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
+        {/* Gender Filter */}
         <select
-          className="border border-gray-300 rounded-lg px-3 py-2"
           value={filterGender}
           onChange={(e) => setFilterGender(e.target.value)}
+          className="border border-gray-300 rounded-md px-3 py-2 w-full sm:w-1/4 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="All">All Genders</option>
+          <option value="">All Genders</option>
           <option value="Male">Male</option>
           <option value="Female">Female</option>
         </select>
@@ -122,23 +129,26 @@ const Patients = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredPatients.map((p) => (
-              <tr key={p.id} className="hover:bg-gray-50">
-                <td className="border p-3">{p.name}</td>
-                <td className="border p-3">{p.age}</td>
-                <td className="border p-3">{p.gender}</td>
-                <td className="border p-3">{p.condition}</td>
+            {filteredPatients.map((patient) => (
+              <tr key={patient.id} className="hover:bg-gray-50">
+                <td className="border p-3">{patient.name}</td>
+                <td className="border p-3">{patient.age}</td>
+                <td className="border p-3">{patient.gender}</td>
+                <td className="border p-3">{patient.condition}</td>
                 <td className="border p-3 text-center">
                   <div className="flex justify-center gap-2">
                     <Button
                       className="bg-yellow-500 hover:bg-yellow-600"
-                      onClick={() => openModal(p)}
+                      onClick={() => openModal(patient)}
                     >
                       Edit
                     </Button>
                     <Button
-                      className="bg-red-600 hover:bg-red-700"
-                      onClick={() => handleDelete(p.id)}
+                      onClick={() => {
+                        setPatientToDelete(patient.id);
+                        setIsDeleteModalOpen(true);
+                      }}
+                      className="bg-red-500 text-white px-3 py-1 rounded"
                     >
                       Delete
                     </Button>
@@ -223,6 +233,45 @@ const Patients = () => {
                   </Button>
                 </div>
               </form>
+            </div>
+          </div>
+        </>
+      )}
+      {isDeleteModalOpen && (
+        <>
+          {/* overlay with blur */}
+          <div
+            className="fixed inset-0 bg-black/40 z-40"
+            style={{ backdropFilter: "blur(6px)" }}
+          />
+
+          {/* modal content */}
+          <div className="fixed inset-0 flex items-center justify-center z-50">
+            <div className="bg-[#f9fafb] p-6 rounded-lg shadow-2xl w-full max-w-md border border-gray-200 text-center">
+              <h3 className="text-lg font-semibold mb-2 text-gray-800">
+                Confirm Deletion
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Are you sure you want to delete this patient? This action cannot
+                be undone.
+              </p>
+              <div className="flex justify-center space-x-4">
+                <Button
+                  onClick={() => {
+                    setIsDeleteModalOpen(false);
+                    setPatientToDelete(null);
+                  }}
+                  className="bg-gray-300 hover:bg-gray-400"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => handleDeletePatient()}
+                  className="bg-red-600 text-white hover:bg-red-700"
+                >
+                  Delete
+                </Button>
+              </div>
             </div>
           </div>
         </>
