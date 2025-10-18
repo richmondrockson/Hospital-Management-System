@@ -31,6 +31,9 @@ const Appointments = () => {
   });
   const [errors, setErrors] = useState({});
 
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [appointmentToDelete, setAppointmentToDelete] = useState(null);
+
   const validateField = (name, value) => {
     let error = "";
 
@@ -90,24 +93,20 @@ const Appointments = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Validate all fields before submission
     Object.keys(formData).forEach((field) =>
       validateField(field, formData[field])
     );
 
-    // Stop submission if there are validation errors
     const hasErrors = Object.values(errors).some((error) => error);
     if (hasErrors) return;
 
     if (editingAppointment) {
-      // Update existing appointment
       setAppointments((prev) =>
         prev.map((appt) =>
           appt.id === editingAppointment.id ? { ...appt, ...formData } : appt
         )
       );
     } else {
-      // Add new appointment
       const newAppointment = {
         id: appointments.length + 1,
         ...formData,
@@ -116,6 +115,12 @@ const Appointments = () => {
     }
 
     closeModal();
+  };
+
+  const handleDeleteAppointment = (id) => {
+    setAppointments((prev) => prev.filter((appt) => appt.id !== id));
+    setIsDeleteModalOpen(false);
+    setAppointmentToDelete(null);
   };
 
   return (
@@ -167,7 +172,13 @@ const Appointments = () => {
                   >
                     Edit
                   </button>
-                  <button className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition">
+                  <button
+                    onClick={() => {
+                      setAppointmentToDelete(appt.id);
+                      setIsDeleteModalOpen(true);
+                    }}
+                    className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition"
+                  >
                     Delete
                   </button>
                 </td>
@@ -177,16 +188,15 @@ const Appointments = () => {
         </table>
       </div>
 
-      {/* Modal */}
+      {/* Add/Edit Modal */}
       {showModal && (
         <>
-          {/* Background overlay (blur + dim) */}
+          {/* Background overlay */}
           <div
             className="fixed inset-0 bg-black/40 z-40"
             style={{ backdropFilter: "blur(6px)" }}
           ></div>
 
-          {/* Modal content */}
           <div className="fixed inset-0 flex items-center justify-center z-50">
             <div className="bg-[#f9fafb] p-6 rounded-lg shadow-2xl w-full max-w-md border border-gray-200">
               <h2 className="text-xl font-semibold mb-4">
@@ -313,6 +323,33 @@ const Appointments = () => {
             </div>
           </div>
         </>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-[#f9fafb] p-6 rounded-lg shadow-lg w-full max-w-sm text-center">
+            <h3 className="text-lg font-semibold mb-4">Confirm Deletion</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete this appointment? This action
+              cannot be undone.
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteAppointment(appointmentToDelete)}
+                className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
